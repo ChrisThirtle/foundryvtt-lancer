@@ -1,7 +1,4 @@
 import { LANCER } from "./config";
-import * as mm from "machine-mind";
-import { IContentPackManifest } from "machine-mind";
-import { LCPIndex } from "./apps/lcpManager";
 
 export const registerSettings = function () {
   /**
@@ -20,7 +17,7 @@ export const registerSettings = function () {
     scope: "world",
     config: false,
     type: String,
-    default: "0.0.0"
+    default: "0.0.0",
   });
 
   game.settings.register(LANCER.sys_name, LANCER.setting_lcps, {
@@ -35,7 +32,7 @@ export const registerSettings = function () {
     scope: "world",
     config: true,
     type: Boolean,
-    default: false
+    default: false,
   });
 
   game.settings.register(LANCER.sys_name, LANCER.setting_welcome, {
@@ -44,6 +41,51 @@ export const registerSettings = function () {
     scope: "world",
     config: true,
     type: Boolean,
-    default: false
-  })
+    default: false,
+  });
+
+  game.settings.register(LANCER.sys_name, LANCER.setting_automation, {
+    name: "System Automation",
+    hint: "Master enable switch for system automation. Turn this off to do everything manually.",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true,
+  });
+
+  game.settings.register(LANCER.sys_name, LANCER.setting_auto_structure, {
+    name: "Automatic Structure/Stress",
+    hint:
+      "When a mech rolls a structure/overheat macro, should it automatically decrease structure/stress?",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true,
+  });
+
+  game.settings.register(LANCER.sys_name, LANCER.setting_pilot_oc_heat, {
+    name: "Auto-Apply Overcharge Heat",
+    hint: "When a mech rolls an overcharge, should it automatically apply heat?",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true,
+  });
+
+  game.settings.register(LANCER.sys_name, LANCER.setting_overkill_heat, {
+    name: "Auto-Apply Overkill Heat",
+    hint: "When an overkill weapon triggers overkill rerolls, should it automatically apply heat?",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true,
+  });
+  
+  game.settings.register(LANCER.sys_name, LANCER.setting_120, {
+    name: "Show v0.1.20 Warning",
+    scope: "world",
+    config: false,
+    type: Boolean,
+    default: true,
+  });
 };

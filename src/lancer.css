@@ -964,7 +964,9 @@ code.horus:hover {
 }
 
 .roll-stat, .roll-attack,
-.roll-trigger, .system-macro {
+.roll-trigger, .system-macro,
+.gear-macro, .cb-macro, .item-macro,
+.core-passive-macro, .core-active-macro {
   margin: 3px 10px;
 }
 
@@ -1067,4 +1069,61 @@ input.core-power-toggle:not(:checked)::before
 {
   content: "\F007A";
   color: grey;
+}
+
+/*
+.overcharge-container {
+  clip-path: circle();
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--main-theme-color, fuchsia);
+}
+
+.overcharge-button {
+  background-color: rgb(204 204 204);
+  clip-path: circle();
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  line-height: .8em;
+  font-weight: bold;
+  font-size: 16pt;
+  color: var(--main-theme-color, fuchsia);
+  border: none;
+}
+*/
+
+.overcharge-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+}
+
+.overcharge-text {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  line-height: .8em;
+}
+
+.overcharge-macro {
+  justify-self: center;
+}
+
+.overcharge-heat {
+  color:#fc3e0f; 
+  flex-grow: unset;
+  width: 1.5em;
+}
+
+.dossier-image[src$=".svg"] {
+  width: 15em;
+  height: 15em;
+}
+
+.dossier-image {
+  grid-area: 1/2/5/3;
+  margin:auto;
+  max-height:minmax(30em,100%);
 }

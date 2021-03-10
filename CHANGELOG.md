@@ -1,3 +1,76 @@
+# 0.1.20 (2021-01-20)
+## Features
+* **Macros**: Add automatic crit damage handling. Thanks, descention!
+* **Macros**: Add item and actor IDs to attack cards to increase module support. Thanks, kreisl!
+
+## Bug Fixes
+* **NPC Sheet**: Updating an NPC's embedded class also updates the NPC's stats. Closes #127.
+
+# 0.1.19 (2020-12-17)
+## Features
+* **Macros**: Add options object for attack macros to specify static attack bonus and bonus damage. Partial for #117.
+
+## Bug Fixes
+* **Macros**: Fix a bug with structure/overheat macros that displayed the wrong result when multiple 1's are rolled.
+* **NPC Sheet**: Fix a bug preventing NPC features from being deleted. Closes #123.
+
+# 0.1.18 (2020-12-15)
+## Bug Fixes
+* **Macros**: Fix a bug with the structure/overheat macros that decide to declare your mech destroyed if structure/stress are full.
+
+# 0.1.17 (2020-12-15)
+## Features
+* **Macros**: Structure and Overheat macros have been added. They can be found in the "LANCER Macros" Compendium, and their functionality can be customized using the system settings. Closes #91.
+* **Macros**: Macros for placing common AOE templates have been added. They can be found in the "AoE Templates" Compendium.
+* **NPC Classes**: Add functionality to NPC Class sheet allowing features from Compendium to be added. Partial for #110.
+
+## Bug Fixes
+* **NPCs**: Don't override NPC stat values when duplicating NPCs. Closes #94.
+* **Pilot/NPC Sheet**: Fix a bug which overwrites prototype token name even if the Actor's name was not edited. Closes #116.
+* **Item Sheets**: Fix some inconsistencies in how range and damage selectors were handled, which caused charge-type systems in particular to lose data when saved. Closes #116.
+* **Macros**: Fix and improve Overkill handling for attack macros. 
+
+# 0.1.16 (2020-11-25)
+## Bug Fixes
+* **Pilot Sheet**: Syncing Comp/Con cloud saves no longer fails with a 401 error. Closes #113. Again.
+* **Pilot Sheet**: Fix an issue where some synced pilots caused the pilot sheet to not render after syncing. Closes #115.
+* **Macros**: Pilot skill trigger and overcharge macros rolled from the sheet no longer fail if no token is selected.
+
+# 0.1.15 (2020-11-22)
+## Features
+* **Pilot Sheet**: Syncing Comp/Con cloud saves now sets up mounts and adds weapons to them. Closes #75.
+
+## Bug Fixes
+* **Pilot Sheet**: Syncing Comp/Con cloud saves no longer fails with a 401 error. Closes #113.
+* **Macros**: Using a macro from the hotbar no longer fails if no token is selected.
+
+# 0.1.14 (2020-11-19)
+## Features
+* **Pilot Sheet**: Added Overcharge macro. Closes #101.
+* **Status Icons**: Added NPC tier icons. Partial work for #92.
+
+## Bug Fixes
+* **Compendium Manager**: Fix bug where item name was used instead of item ID when finding items to update from an LCP. Closes #108.
+* **Pilot Sheet**: Don't add mech weapons when syncing a Comp/Con pilot.
+* **Pilot Sheet**: Fix reversed current and max repairs when syncing a Comp/Con pilot. Closes #109.
+* **Item Sheets**: Save new item name into system data so that item previews show the updated name. Closes #111.
+
+# 0.1.13 (2020-11-08)
+## Features
+* **Pilot Sheet**: Added macros for pilot gear, core bonuses, core actives, and core passives. Closes #10.
+* **Pilot Sheet**: Added basic Overcharge tracking. Partial solution for #101.
+* **NPC Sheet**: Added macros for systems, traits, and reactions. Closes #10.
+* **NPC Sheet**: Added a link beside the class name to open the NPC's class item.
+* **NPC Class Sheet**: The Base and Optional Feature sections are now populated with previews of the features. The previews can be dragged onto NPC sheets to add the items to the NPC, without opening any Compendiums. Closes #106.
+* **NPC Template Sheet**: Likewise populates the Base and Optional Feature sections with draggable feature previews. Closes #106.
+* **Migration**: Migration logic is now more intelligent, avoiding unnecessary migrations each version update.
+
+## Bug Fixes
+* **Macros**: NPC Weapon "On Hit" effects now show in chat. Closes #95.
+* **NPC Sheet**: Fix a issue causing NPC Templates to be un-deletable. Closes #97.
+* **Status Icons**: Improved status icons to include tooltips in the token HUD. Closes #93.
+* **General**: Fix an issue causing the system to fail to load on Foundry 0.7.6. Closes #107.
+
 # 0.1.12 (2020-10-21)
 ## Bug Fixes
 * **General**: Fix a bug where some parts of the system tried to load too soon and failed fatally.

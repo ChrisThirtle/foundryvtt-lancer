@@ -1,22 +1,9 @@
-import {
-  LancerSkillSheetData,
-  LancerNPCFeatureSheetData,
-  DamageData,
-  LancerMechSystemData,
-  RangeData,
-  TagDataShort
-} from "../interfaces";
+import { DamageData, LancerMechSystemData, RangeData } from "../interfaces";
 import { LANCER } from "../config";
 import { NPCFeatureIcons } from "./npc-feature";
-import {
-  NpcFeatureType,
-  Npc,
-  ActivationType,
-  ChargeType,
-  DamageType,
-  EffectType,
-} from "machine-mind";
-import { BasicEffectData, ChargeData, ChargeEffectData } from "./effects";
+import { ActivationType, ChargeType, DamageType, EffectType, NpcFeatureType } from "machine-mind";
+import { ChargeData, ChargeEffectData } from "./effects";
+
 const lp = LANCER.log_prefix;
 
 /**
@@ -58,7 +45,7 @@ export class LancerItemSheet extends ItemSheet {
    * The prepared data object contains both the item data as well as additional sheet options
    */
   getData(): ItemSheetData {
-    const data: ItemSheetData = super.getData();
+    const data: ItemSheetData = super.getData() as ItemSheetData;
 
     if (!data.item) {
       // Just junk it
@@ -81,11 +68,10 @@ export class LancerItemSheet extends ItemSheet {
     if (data.item.type === "mech_system") {
       // For effects which are a basic string, construct a BasicEffectData for them.
       if (typeof data.data.effect === "string") {
-        const effect: BasicEffectData = {
+        data.data.effect = {
           effect_type: EffectType.Basic,
           detail: data.data.effect,
         };
-        data.data.effect = effect;
       }
     }
 
@@ -97,11 +83,10 @@ export class LancerItemSheet extends ItemSheet {
 
   /** @override */
   setPosition(options = {}) {
-    const position = super.setPosition(options);
     // const sheetBody = (this.element as HTMLDivElement).find(".sheet-body");
     // const bodyHeight = position.height - 192;
     // sheetBody.css("height", bodyHeight);
-    return position;
+    return super.setPosition(options);
   }
 
   /* -------------------------------------------- */
@@ -109,7 +94,7 @@ export class LancerItemSheet extends ItemSheet {
   /**
    * @override
    * Activate event listeners using the prepared sheet HTML
-   * @param html {HTML}   The prepared HTML object ready to be rendered into the DOM
+   * @param html {JQuery}   The prepared HTML object ready to be rendered into the DOM
    */
   activateListeners(html: JQuery) {
     super.activateListeners(html);
@@ -122,14 +107,18 @@ export class LancerItemSheet extends ItemSheet {
     decr.on("click", (ev: Event) => {
       if (!ev.currentTarget) return; // No target, let other handlers take care of it.
       const but = $(ev.currentTarget as HTMLElement);
-      (but.next()[0] as HTMLInputElement).value = ((but.next()[0] as HTMLInputElement).valueAsNumber - 1).toString();
+      (but.next()[0] as HTMLInputElement).value = (
+        (but.next()[0] as HTMLInputElement).valueAsNumber - 1
+      ).toString();
       this.submit({});
     });
     let incr = html.find('button[class*="mod-plus-button"]');
     incr.on("click", (ev: Event) => {
       if (!ev.currentTarget) return; // No target, let other handlers take care of it.
       const but = $(ev.currentTarget as HTMLElement);
-      (but.prev()[0] as HTMLInputElement).value = ((but.prev()[0] as HTMLInputElement).valueAsNumber + 1).toString();
+      (but.prev()[0] as HTMLInputElement).value = (
+        (but.prev()[0] as HTMLInputElement).valueAsNumber + 1
+      ).toString();
       this.submit({});
     });
 
@@ -155,7 +144,7 @@ export class LancerItemSheet extends ItemSheet {
     if (s.val() === "delete") {
       event.preventDefault();
       const itemString = s.data("item");
-      var itemArr = duplicate(this["object"]["data"]["data"][itemString]);
+      const itemArr = duplicate(this["object"]["data"]["data"][itemString]);
       const parent = s.parents(".arrayed-item");
       const id = parent.data("key");
 
@@ -173,16 +162,17 @@ export class LancerItemSheet extends ItemSheet {
    * @private
    */
   async _onClickArrayControl(event: any) {
+    let itemArr;
     event.preventDefault();
     const a = $(event.currentTarget);
     const action = a.data("action");
     const itemString = a.parents(".arrayed-item-container").data("item");
     console.log(itemString);
-    var baseArr = getValue(this, "object.data.data." + itemString);
+    const baseArr = getValue(this, "object.data.data." + itemString);
     if (!baseArr) {
       itemArr = [];
     } else {
-      var itemArr = duplicate(baseArr);
+      itemArr = duplicate(baseArr);
     }
     const dataRef = "data." + itemString;
 
@@ -191,7 +181,7 @@ export class LancerItemSheet extends ItemSheet {
       // I can't figure out a better way to prevent collisions
       // Feel free to come up with something better
       const keys = Object.keys(itemArr);
-      var newIndex = 0;
+      let newIndex = 0;
       if (keys.length > 0) {
         // @ts-ignore
         newIndex = Math.max.apply(Math, keys) + 1;
@@ -227,6 +217,9 @@ export class LancerItemSheet extends ItemSheet {
     formData = LancerItemSheet.arrayifyTags(formData, "data.core_system.tags");
     formData = LancerItemSheet.arrayifyTags(formData, "data.traits");
 
+    // Update the Lancer-data name to match the item name.
+    formData["data.name"] = formData["name"];
+
     if (this.item.data.type === "npc_feature") {
       // Change image to match feature type, unless a custom image has been selected
       const imgPath = "systems/lancer/assets/icons/";
@@ -249,76 +242,82 @@ export class LancerItemSheet extends ItemSheet {
         ] = `${formData["data.weapon_size"]} ${formData["data.weapon_type"]}`;
         delete formData["data.weapon_size"];
       }
+
+      // Give it a custom fake ID if it doesn't have one
+      if(!(this.item.data.data.id)) {
+        this.item.update({"data.id":"custom_npcf_" + this.item.id},{});
+      }
     }
 
-    if (LANCER.weapon_items.includes(this.item.data.type)) {
+    // Weapons & systems can have ranges, consolidating into one place w/ better matching
+    if (LANCER.weapon_items.includes(this.item.data.type) || this.item.data.type === 'mech_system') {
       // Safeguard against non-weapon NPC features
       if (
         this.item.data.type !== "npc_feature" ||
         (this.item.data.type === "npc_feature" &&
           this.item.data.data.feature_type === NpcFeatureType.Weapon)
       ) {
-        // Build range and damage arrays
-        let damage = [];
-        let range = [];
-        let d_done = false;
-        let r_done = false;
-        let i = 0;
-        while (!d_done || (!r_done && i < 10)) {
-          if (formData.hasOwnProperty(`data.damage.${i}.type`)) {
-            damage.push({
-              type: formData[`data.damage.${i}.type`],
-              val: formData[`data.damage.${i}.val`],
-            });
-            delete formData[`data.damage.${i}.type`];
-            delete formData[`data.damage.${i}.val`];
-          } else d_done = true;
 
-          if (formData.hasOwnProperty(`data.range.${i}.type`)) {
-            range.push({
-              type: formData[`data.range.${i}.type`],
-              val: formData[`data.range.${i}.val`],
-            });
-            delete formData[`data.range.${i}.type`];
-            delete formData[`data.range.${i}.val`];
-          } else d_done = true;
-
-          i++;
+        // Uses Regex to dynamically find ranges/damages for better forward extensibility
+        var damKeys = [];
+        var rangeKeys = [];
+        var damFilter = /(\.damage)\.\d\.(type|val)/;
+        var rangeFilter = /(\.range)\.\d\.(type|val)/;
+        var key = "";
+        for (key in formData) {
+          if (formData.hasOwnProperty(key) && damFilter.test(key)) {
+            damKeys.push(key);
+          }
+          if (formData.hasOwnProperty(key) && rangeFilter.test(key)) {
+            rangeKeys.push(key);
+          }
         }
-        formData["data.damage"] = damage;
-        formData["data.range"] = range;
-      }
-    }
 
-    if (this.item.data.type === "mech_system") {
-      const i_data = this.item.data.data as LancerMechSystemData;
-      // If the effect type has changed, initialize the effect structure
-      if (i_data.effect.effect_type !== formData["data.effect.effect_type"]) {
-        if (formData["data.effect.effect_type"] === EffectType.Charge) {
-          var rdata: RangeData = {
-            type: "None",
-            val: 0,
-          };
-          var ddata: DamageData = {
-            type: DamageType.Explosive,
-            val: "",
-          };
-          var charge: ChargeData = {
-            name: "",
-            charge_type: ChargeType.Grenade,
-            detail: "",
-            range: [duplicate(rdata), duplicate(rdata)],
-            damage: [duplicate(ddata), duplicate(ddata)],
-            tags: [],
-          };
-          var effect: ChargeEffectData = {
-            effect_type: formData["data.effect.effect_type"],
-            name: "",
-            charges: [duplicate(charge), duplicate(charge)],
-            activation: ActivationType.None,
-            tags: [],
-          };
-          formData["data.effect"] = effect;
+        // Sanity check to make sure it's all paired
+        if(rangeKeys.length % 2 || damKeys.length % 2) {
+          console.log("Error updating range/damage");
+          ui.notifications.error(
+            `Warning: Error updating item range/damage. Please report this`
+          );
+          return;
+        }
+
+        var newDamage: {[index:string]:Array<object>} = {};
+        let newRange: {[index:string]:Array<object>} = {};
+        var split = [];
+
+
+        // We're going to process both at once because we're fancy like that
+        var newCombined: Array<{[index:string]:Array<object>}> = [newDamage, newRange];
+        var combinedKeys: Array<Array<string>> = [damKeys, rangeKeys];
+        var combinedFilters: Array<RegExp> = [damFilter, rangeFilter];
+
+        // Remember to use standard for loops if it's arrays...
+        for(var i = 0; i < newCombined.length; i++) {
+          for (var j = 0; j  < combinedKeys[i].length; j += 2 ) {
+            // Grab our pre-damage/range path
+            split = combinedKeys[i][j].split(combinedFilters[i]);
+  
+            // Initialize if it hasn't already
+            if(!newCombined[i][split[0] + split[1]]) {
+              newCombined[i][split[0] + split[1]] = []
+            }
+  
+            // For now... assume type first (which should always be the case)
+            newCombined[i][split[0] + split[1]].push({
+              type: formData[combinedKeys[i][j]],
+              val: formData[combinedKeys[i][j+1]]
+            });
+
+            // Remove the old data
+            delete formData[combinedKeys[i][j]];
+            delete formData[combinedKeys[i][j+1]];
+          }
+
+          // Put back in the real data
+          for (key in newCombined[i]){
+            formData[key] = newCombined[i][key];
+          }
         }
       }
     }
@@ -337,11 +336,13 @@ export class LancerItemSheet extends ItemSheet {
         tags.push({
           name: data[`${prefix}.${i}.name`],
           id: data[`${prefix}.${i}.id`],
-          description: data[`${prefix}.${i}.description`]
+          description: data[`${prefix}.${i}.description`],
+          val: data[`${prefix}.${i}.val`],
         });
         delete data[`${prefix}.${i}.name`];
         delete data[`${prefix}.${i}.id`];
         delete data[`${prefix}.${i}.description`];
+        delete data[`${prefix}.${i}.val`];
         i++;
       }
       data[`${prefix}`] = tags;
@@ -354,7 +355,7 @@ export class LancerItemSheet extends ItemSheet {
 function getValue(object: any, path: string) {
   return path
     .replace(/\[/g, ".")
-    .replace(/\]/g, "")
+    .replace(/]/g, "")
     .split(".")
     .reduce((o, k) => (o || {})[k], object);
 }

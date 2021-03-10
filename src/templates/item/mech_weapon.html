@@ -14,7 +14,7 @@
   </header>
 
   {{!-- Sheet Body --}}
-  <section class="sheet-body" style="height:-webkit-fill-available">
+  <section class="sheet-body" style="height: 100%">
     <div style="grid-template: 2em 10em fit-content(0) fit-content(0) 1fr / repeat(3, 1fr); display: grid;">
 
       {{!-- Size and Type --}}
@@ -48,7 +48,13 @@
         {{editor content=data.description target="data.description" button=true owner=owner editable=editable}}
       </div>
 
-      {{!-- TODO: Item effects --}}
+      {{!-- TODO: Proper item effects --}}
+      {{!-- Effects --}}
+      <div class="flexcol card clipped" style="grid-area: 4 / 1 / 5 / 4">
+        <span class="lancer-stat-header major clipped-top">EFFECT</span>
+        {{editor content=data.effect.detail target="data.effect.detail" button=true owner=owner editable=editable}}
+      </div>
+
 
       {{!-- TODO: We can probably even pull this out... --}}
       {{!-- Tags --}}

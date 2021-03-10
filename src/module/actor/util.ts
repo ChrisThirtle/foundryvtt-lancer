@@ -1,23 +1,13 @@
 import * as mm from "machine-mind";
-import { LancerActor, lancerActorInit } from "./lancer-actor";
-import { CompendiumCategory, store, CompendiumItem, Mount, MechWeapon } from "machine-mind";
-import {
-  LancerPilotData,
-  LancerPilotActorData,
-  LancerMountData,
-  LancerMechWeaponData,
-} from "../interfaces";
-import {
-  MachineMind_pilot_to_VTT_items_compendium_lookup,
-  ItemManifest,
-  ItemDataManifest,
-} from "../item/util";
-import { LancerItem, LancerItemData } from "../item/lancer-item";
+import { CompendiumCategory, CompendiumItem, ItemType, MountType, store } from "machine-mind";
+import { LancerActor } from "./lancer-actor";
+import { LancerMechWeaponData, LancerMechWeaponItemData, LancerMountData, LancerPilotActorData } from "../interfaces";
+import { ItemDataManifest, MachineMind_pilot_to_VTT_items_compendium_lookup, MachineMind_to_VTT_data } from "../item/util";
+import { LancerItem, LancerMechWeapon } from "../item/lancer-item";
 
 export async function import_pilot_by_code(code: string): Promise<mm.Pilot> {
   let data = await mm.loadPilot(code);
-  let pilot = mm.Pilot.Deserialize(data);
-  return pilot;
+  return mm.Pilot.Deserialize(data);
 }
 
 // Make the specified actor be the specified pilot
@@ -45,7 +35,7 @@ export async function update_pilot(pilot: LancerActor, cc_pilot: mm.Pilot): Prom
 
   // Wipe old items
   for (let item of pilot.items.values()) {
-    pilot.deleteOwnedItem(item._id);
+    await pilot.deleteOwnedItem(item._id);
   }
 
   // Do some pre-editing before owning
@@ -53,13 +43,11 @@ export async function update_pilot(pilot: LancerActor, cc_pilot: mm.Pilot): Prom
   let item_data_sorted = new ItemDataManifest().add_items(item_data);
 
   for (let talent of item_data_sorted.talents) {
-    let corr_talent_rank = cc_pilot.getTalentRank(talent.data.id);
-    talent.data.rank = corr_talent_rank;
+    talent.data.rank = cc_pilot.getTalentRank(talent.data.id);
   }
 
   for (let skill of item_data_sorted.skills) {
-    let corr_skill_rank = cc_pilot.getSkillRank(skill.data.id);
-    skill.data.rank = corr_skill_rank;
+    skill.data.rank = cc_pilot.getSkillRank(skill.data.id);
   }
 
   // Copy them all
@@ -118,19 +106,19 @@ export async function update_pilot(pilot: LancerActor, cc_pilot: mm.Pilot): Prom
     pd.mech.structure.value = am.CurrentStructure;
     pd.mech.structure.max = am.MaxStructure;
     pd.mech.tech_attack = am.TechAttack;
-    pd.mech.repairs.max = am.CurrentRepairs;
-    pd.mech.repairs.value = am.RepairCapacity;
+    pd.mech.repairs.value = am.CurrentRepairs;
+    pd.mech.repairs.max = am.RepairCapacity;
     pd.mech.sensors = am.SensorRange;
     pd.mech.size = am.Size;
     pd.mech.speed = am.Speed;
     pd.mech.hp.value = am.CurrentHP;
     pd.mech.hp.max = am.MaxHP;
 
+
     // pd.mech_loadout.mounts
-    /*
+    
     if(am.ActiveLoadout) {
       let aml = am.ActiveLoadout;
-      let raw_mounts: Mount[] = [];
 
       // Check the core bonuses
       let int = store.compendium.getReferenceByIDCareful("CoreBonuses", "cb_integrated_weapon")
@@ -138,43 +126,58 @@ export async function update_pilot(pilot: LancerActor, cc_pilot: mm.Pilot): Prom
       let ia = store.compendium.getReferenceByID("CoreBonuses", "cb_improved_armament");
       let has_ia = ia ? cc_pilot.has(ia) : false;
 
-      // Build out our list
-      raw_mounts.push(...aml.IntegratedMounts);
-      if(has_int) {
-        raw_mounts.push(aml.IntegratedWeaponMount);
-      }
-      if(has_ia && aml.EquippableMounts.length < 3) {
-        raw_mounts.push(aml.ImprovedArmamentMount);
-      }
-      raw_mounts.push(...aml.EquippableMounts);
+      let mr = store.compendium.getReferenceByID("CoreBonuses", "cb_mount_retrofitting");
 
+      // Fetch integrated and equippable mounts separately as they are different data types, save trouble later.
+      let cc_equippableMounts = aml.AllEquippableMounts(has_ia, has_int)
+      let cc_integratedMounts = aml.IntegratedMounts
       // Convert to foundry
+
+      let weaponData = pilot.items.filter((item: LancerItem) => item.type === "mech_weapon")
+
       let mounts: LancerMountData[] = [];
-      for(let raw of raw_mounts) {
-        let weapons = raw.Weapons.map(wep => {
-          let result: LancerMechWeaponData = {
+      let equippableMounts = cc_equippableMounts.map( cc_mount => {
+        let is_mr = cc_mount.Bonuses.includes(mr)
+        let mountWeapons = cc_mount.Weapons.map(cc_weapon => {
+          return weaponData.find(weapon => {
+            return cc_weapon.ID === weapon.data.data.id
+          })
+        }) as LancerMechWeaponItemData[] 
 
+        let mount: LancerMountData = {
+          secondary_mount: "",
+          type: is_mr ? MountType.MainAux : cc_mount.Type, //Handle Mount Retrofitting core bonus
+          weapons: mountWeapons,
+        }
 
-          }
-        });
+        return mount
+      })
 
+      let integratedMounts = cc_integratedMounts.map( cc_mount => {
+        let mountWeapons = cc_mount.Weapons.map(cc_weapon => {
+          return weaponData.find(weapon => {
+            return cc_weapon.ID === weapon.data.data.id
+          })
+        }) as LancerMechWeaponItemData[] 
 
-        mounts.push({
-          secondary_mount: "I don't think this does anything",
-          type: r.Type,
-          weapons
-        })j
-      }
+        let mount: LancerMountData = {
+          secondary_mount: "",
+          type: cc_mount.Type,
+          weapons: mountWeapons,
+        }
 
-      for(let m of [...aml.AllMounts])
-      console.log("henlo");
-      console.log(pd.mech_loadout);
-      console.log(am.ActiveLoadout);
+        return mount
+      })
+      
+      mounts = integratedMounts.concat(equippableMounts)
+
+      pd.mech_loadout.mounts = mounts
+      
     }
-    */
+    
   }
 
-  pilot.update(pad);
+  await pilot.update(pad);
 
   // Fixup actor name -- this might not work
   // pilot.token.update({name: cc_pilot.Name});
